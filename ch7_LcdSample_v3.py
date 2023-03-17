@@ -72,15 +72,20 @@ lcd_1.clear()
 lcd_1.set_backlight(1)
 try:
     gif = Image.open('pingu.gif')
+    frames = []
+    for i in range(gif.n_frames):
+        gif.seek(i)
+        frames.append(lcd_1.bytes_from_image(gif.resize((lcd_1.width, lcd_1.height))))
     while True:
         for f in range(0,gif.n_frames):
-            gif.seek(f)
+            #gif.seek(f)
             ActivateLCD()
             lcd_1.clear()
             lcd_1.go_to_xy(13, 0)
             #lcd_1.put_string('LCD_Sample:' + str(i))
             #lcd_1.draw_logo()
-            lcd_1.draw_PIL_image(gif.resize((lcd_1.width, lcd_1.height)))
+            #lcd_1.draw_PIL_image(gif.resize((lcd_1.width, lcd_1.height)))
+            lcd_1.draw_image(frames[f], 84, 48)
             lcd_1.refresh()
             DeactivateLCD()
             time.sleep(gif.info['duration']/1000.0)

@@ -372,8 +372,29 @@ class LCD:
     def draw_logo(self):
         self.draw_image(pi_logo, 84, 48)
 
-    #def bytes_from_image(self, image, width, height, x=0, y=0, threshold=128):
-        # the same as draw, but need to reposition bytes 
+    def bytes_from_image(self, image, width=LCD_WIDTH, height=LCD_HEIGHT, x=0, y=0, threshold=128, invert=False):
+        # the same as draw, but need to reposition bytes
+        # grayscale -> threshold + invert -> monochrome -> convert to bytearray
+        if invert:
+            img = image.convert('L').point( lambda p: 255 if p > threshold else 0 ).convert('1').tobytes()
+        else:    
+            img = image.convert('L').point( lambda p: 0 if p > threshold else 255 ).convert('1').tobytes()
+        # switch order of bits in a byte
+        rimg = b''
+        for b in img:
+            rimg += int("{:08b}".format(b)[::-1],2).to_bytes(1, 'little')
+        nimg = b''
+        for k in range((height//8)*width):
+            nimg += b'\x00'
+        # set pixels - with removing padding at the end of lines
+        nlist = list(nimg)
+        padding = 8 - (width % 8) if (width % 8) else 0
+        for j in range(height):
+            for i in range(width):
+                if (rimg[((i + j*(width+padding))//8)] & _BV(i%8)):
+                    nlist[i + (j//8)*width] = nlist[i + (j//8)*width] | _BV(j%8)
+        return bytes(nlist)
+
 
     def draw_PIL_image(self, image, width=LCD_WIDTH, height=LCD_HEIGHT, x=0, y=0, threshold=128, invert=False):
         # grayscale -> threshold + invert -> monochrome -> convert to bytearray
